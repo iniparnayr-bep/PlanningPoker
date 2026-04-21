@@ -4,10 +4,12 @@ export interface Player {
     estimate: number | null;
     isOwner: boolean;
     id: string;
+    avatar?: string;
 }
 
 export interface ExportPlayer {
     name: string;
+    avatar?: string;
 }
 
 export interface ExportEstimatePlayer {
@@ -15,4 +17,5 @@ export interface ExportEstimatePlayer {
     id: string;
     estimate: number | null;
     isOwner: boolean;
+    avatar?: string;
 }

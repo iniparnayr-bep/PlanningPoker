@@ -74,4 +74,6 @@ export interface ExportEstimateSession {
     open: boolean;
     estimationOptions: EstimationOption;
     estimationValues: string[];
+    color?: string;
+    emojisEnabled?: boolean;
 }

@@ -52,6 +52,8 @@ export interface Session {
     open: boolean;
     estimationOptions: EstimationOption;
     estimationValues: string[];
+    color: string;           // session-wide color theme key (default|purple|blue|green|gray|red|dark)
+    emojisEnabled: boolean;  // gates throw/rain features for the whole room
     timeoutId?: NodeJS.Timeout;
 }
 
@@ -74,4 +76,6 @@ export interface ExportEstimateSession {
     open: boolean;
     estimationOptions: EstimationOption;
     estimationValues: string[];
+    color: string;
+    emojisEnabled: boolean;
 }

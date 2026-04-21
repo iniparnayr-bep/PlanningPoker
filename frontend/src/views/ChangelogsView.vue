@@ -27,29 +27,28 @@ const changelogs = [
   {
     title: 'Version 0.2.0 Beta',
     body: 'Chat Tabs, Images and Gifs in chat',
-    server: 'derzeitige Version',
+    server: 'current version',
     green: true
   },
   {
     title: 'Version 0.1.0 Beta',
     body: 'Feature: AI Integration',
-
   },
   {
     title: 'Version 0.0.4 Beta',
-    body: 'Bugfix: Schätzungsdiagramm verschwindet mit einer nachträglichen Schätzungsänderung',
+    body: 'Bugfix: Estimation chart disappears when an estimate is changed after reveal',
   },
   {
     title: 'Version 0.0.3 Beta',
-    body: 'Die changelogs wurden hinzufügt',
+    body: 'Changelogs added',
   },
   {
     title: 'Version 0.0.2 Beta',
-    body: 'Bugreport und Changerequest wurden hinzugefügt',
+    body: 'Bug report and change request added',
   },
   {
     title: 'Version 0.0.1 Beta',
-    body: 'Zusätzlich zu Fibonacci Schätzungen wurden T-Shirt und Power Of two Schätzungen hinzugefügt.<br/> Zudem kann man sehen wie viele Session gerade aktiv sind.',
+    body: 'T-Shirt and Powers of Two estimation modes added alongside Fibonacci.<br/> Active session count is now visible on the home screen.',
   }
 ]
 </script>

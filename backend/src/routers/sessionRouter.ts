@@ -52,6 +52,7 @@ router.post('/newSession', (req, res) => {
         id: nanoid(7),
         token: nanoid(25),
         isOwner: true,
+        avatar: pickAvatar([]),
         lastAction: new Date(),
         timeoutIds: [],
     }
@@ -62,6 +63,8 @@ router.post('/newSession', (req, res) => {
         players: [owner],
         estimationOptions: EstimationOption.Fibonacci,
         estimationValues: FibonacciEstimationValues,
+        color: 'default',
+        emojisEnabled: true,
     }
     sessions.push(newSession);
     res.send(newSession);
@@ -71,12 +74,14 @@ router.post('/newSession', (req, res) => {
 
 router.post('/joinSession/:token', (req, res) => {
     const token = req.params.token;
+    const sessionForAvatar = sessions.find(s => s.token === token);
     const player: Player = {
         name: req.body.name,
         id: nanoid(7),
         estimate: null,
         token: nanoid(25),
         isOwner: false,
+        avatar: pickAvatar(sessionForAvatar ? sessionForAvatar.players.map(p => p.avatar) : []),
         lastAction: new Date(),
         timeoutIds: [],
     };
@@ -89,7 +94,7 @@ router.post('/joinSession/:token', (req, res) => {
         io.to(token).emit('playerJoined', getSessionInfo(token));
         res.send(player);
         setPlayerTimers(token, player.token);
-        sendMessageStrFromServer(token, player.name + ' ist der Sitzung beigetreten.');
+        sendMessageStrFromServer(token, player.name + ' joined the session.');
         logSesstionDetails(token, player.name + ' joined session ' + token);
         clearSessionDeletion(session);
     }
@@ -365,7 +370,7 @@ router.put('/makeAdmin/:sessionToken/:otherPlayerId', (req, res) => {
     player.isOwner = false;
     io.to(socketPlayers[otherPlayer.token]).emit('updateUserinfo');
     io.to(socketPlayers[player.token]).emit('updateUserinfo');
-    sendMessageStrFromServer(sessionToken, otherPlayer.name + ' ist jetzt der Sitzungsleiter.');
+    sendMessageStrFromServer(sessionToken, otherPlayer.name + ' is now the session leader.');
     log('Admin changed: ' + otherPlayer.name);
     res.send('OK');
 });
@@ -393,6 +398,103 @@ router.post('/throw/:id/:sessionToken', (req, res) => {
     throwEmojiAt(session, throwPlayer, emoji);
     res.send('OK');
 });
+
+// ── PUT /session/:token/color ──
+router.put('/session/:token/color', (req, res) => {
+    const sessionToken = req.params.token;
+    const userToken = req.body.userToken;
+    const color = req.body.color;
+    const allowed = ['default', 'purple', 'blue', 'green', 'gray', 'red', 'dark'];
+    if (!allowed.includes(color)) return res.status(400).send('Invalid color');
+
+    const session = getSessionByToken(sessionToken);
+    if (!session) return res.status(404).send('Session not found');
+    if (!checkIsOwnerByToken(userToken, session)) return res.status(403).send('Not owner');
+
+    session.color = color;
+    io.to(sessionToken).emit('sessionSettings', getSessionInfo(sessionToken));
+    res.send('OK');
+});
+
+// ── PUT /session/:token/emojis ──
+router.put('/session/:token/emojis', (req, res) => {
+    const sessionToken = req.params.token;
+    const userToken = req.body.userToken;
+    const enabled = !!req.body.enabled;
+
+    const session = getSessionByToken(sessionToken);
+    if (!session) return res.status(404).send('Session not found');
+    if (!checkIsOwnerByToken(userToken, session)) return res.status(403).send('Not owner');
+
+    session.emojisEnabled = enabled;
+    io.to(sessionToken).emit('sessionSettings', getSessionInfo(sessionToken));
+    res.send('OK');
+});
+
+// ── PUT /session/:token/rename ──
+router.put('/session/:token/rename', (req, res) => {
+    const sessionToken = req.params.token;
+    const userToken = req.body.userToken;
+    const name = (req.body.name || '').toString().trim();
+    if (!name) return res.status(400).send('Name required');
+    if (name.length > 60) return res.status(400).send('Name too long');
+
+    const session = getSessionByToken(sessionToken);
+    if (!session) return res.status(404).send('Session not found');
+    if (!checkIsOwnerByToken(userToken, session)) return res.status(403).send('Not owner');
+
+    session.name = name;
+    io.to(sessionToken).emit('sessionSettings', getSessionInfo(sessionToken));
+    res.send('OK');
+});
+
+// ── PUT /player/rename/:token ── (player updates name and/or avatar in a session)
+router.put('/player/rename/:token', (req, res) => {
+    const sessionToken = req.params.token;
+    const userToken = req.body.userToken;
+    const name = req.body.name !== undefined ? (req.body.name || '').toString().trim() : undefined;
+    const avatar = req.body.avatar !== undefined ? (req.body.avatar || '').toString().trim() : undefined;
+
+    const session = getSessionByToken(sessionToken);
+    if (!session) return res.status(404).send('Session not found');
+
+    const player = getPlayerByToken(userToken, sessionToken);
+    if (!player) return res.status(404).send('Player not found');
+
+    if (name !== undefined) {
+        if (!name) return res.status(400).send('Name required');
+        if (name.length > 50) return res.status(400).send('Name too long (max 50)');
+        const taken = session.players.some(p => p.token !== userToken && p.name === name);
+        if (taken) return res.status(409).send('Name already taken in this session');
+        player.name = name;
+    }
+    if (avatar !== undefined) {
+        if (avatar.length > 8) return res.status(400).send('Avatar too long');
+        player.avatar = avatar || pickAvatar(session.players.filter(p => p.token !== userToken).map(p => p.avatar));
+    }
+
+    io.to(sessionToken).emit('playerJoined', getSessionInfo(sessionToken));
+    io.to(socketPlayers[player.token]).emit('updateUserinfo');
+    if (name !== undefined) {
+        sendMessageStrFromServer(sessionToken, 'A player changed their name to ' + name + '.');
+    }
+    log('Player updated: ' + player.name + ' in ' + sessionToken);
+    res.send('OK');
+});
+
+// Pick a default avatar emoji not currently used by anyone else in the session
+function pickAvatar(used: string[]): string {
+    const pool = [
+        '🦊','🐯','🦁','🐼','🐻','🐨','🐾','🦖',
+        '🐙','🦀','🐬','🐠','🐧','🦆','🦉','🐔',
+        '🦄','🐉','🐲','🐳','🐍','🐢','🦎','🦝',
+        '🐝','🐞','🐛','🦋','🕵','👨‍🎨',
+        '🚀','⭐','🌈','🔥','❄️','⚡','🌊','🌺',
+    ];
+    const available = pool.filter(a => !used.includes(a));
+    const candidates = available.length ? available : pool;
+    return candidates[Math.floor(Math.random() * candidates.length)];
+}
 
 router.get('/currentActiveSessions', (req, res) => {
     const activeSessions = sessions.filter((session) => session.players.length > 0);

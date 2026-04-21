@@ -123,3 +123,12 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+frontend/dist/
+backend/src/**/*.js

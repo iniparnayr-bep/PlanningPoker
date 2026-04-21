@@ -26,6 +26,7 @@ export function handleNewChatMessage(socketId: string, message: Message) {
 const commands: { [key: string]: (command: string, socketId: string) => void } = {
     "ask": handleAsk,
     "estimation": handleEstimation,
+    "estimate": handleEstimation, // alias
 }
 
 function handleCommand(command: string, socketId: string) {

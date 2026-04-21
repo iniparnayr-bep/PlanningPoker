@@ -1,148 +1,150 @@
 <script setup lang="ts">
 import sessionRef from "@/reactive/useSession";
 import userRef from "@/reactive/useUser";
-import ColorThemeChooser from "@/components/ColorThemeChooser.vue";
-import {CopyOutlined, EyeInvisibleOutlined, EyeOutlined, LogoutOutlined, UserOutlined, UserSwitchOutlined} from "@ant-design/icons-vue";
-import env from "@/environments/environments";
-import {message} from "ant-design-vue";
-import {exitSpectateGame, getSpectatorAsUser, leaveGame} from "@/api/joinLeaveService";
-import {openSession} from "@/api/actionsService";
-import {useRoute, useRouter} from "vue-router";
-import {noop} from "rxjs";
-import {ref, watch} from "vue";
-import EstimationOptionsChooser from "@/components/EstimationOptionsChooser.vue";
+import { UserOutlined, SettingOutlined, EditOutlined } from "@ant-design/icons-vue";
+import SettingsDrawer from "@/components/SettingsDrawer.vue";
+import RenameSelfDialog from "@/components/RenameSelfDialog.vue";
+import { ref, watch } from 'vue';
 
-const router = useRouter();
-const route = useRoute();
-const gameToken: string = (typeof route.params.token === 'object' ? route.params.token[0] : route.params.token);
+const settingsOpen = ref(false);
+const renameSelfOpen = ref(false);
 
-const handleLeave = () => {
-  if (!userRef.value)
-    return;
-  leaveGame(gameToken, userRef.value.token).then(() => {
-    router.push('/');
-  });
-}
-const handleCopy = () => {
-  navigator.clipboard.writeText(env.joinAddress + gameToken).then(() => {
-    message.success('Beitrittslink wurde in die Zwischenablage kopiert.');
-  });
-}
-const handleLeaveSpectatorMode = () => {
-  exitSpectateGame().then(() => {
-    router.push('/');
-  });
-}
-const handleSpectateFromPlayer = () => {
-  getSpectatorAsUser().then(() => message.success('Du bist nun Zuschauer.'));
-}
-
-const toggleOpen = async () => {
-  if (!sessionRef.value)
-    return;
-  await openSession(!sessionRef.value.open);
-}
-
-const handleJoinGame = () => {
-  router.push('/join/' + gameToken);
-}
+// Apply session-wide color to <body> whenever it changes
+watch(
+  () => sessionRef.value?.color,
+  (c) => { if (c) document.body.className = c; },
+  { immediate: true }
+);
 </script>
 
 <template>
-  <div class="top-bar">
-    <div style="gap: 1rem;" class="top-bar_container">
-      <h1 v-if="sessionRef">
-        {{ sessionRef.name }}
-      </h1>
-      <a-button @click="toggleOpen()" v-if="userRef && userRef.isOwner && sessionRef && sessionRef.open === true">
-        <template #icon>
-          <EyeInvisibleOutlined></EyeInvisibleOutlined>
-        </template>
-        neue Schätzung
-      </a-button>
-      <a-button @click="toggleOpen()" v-if="userRef && userRef.isOwner && sessionRef && sessionRef.open === false">
-        <template #icon>
-          <EyeOutlined></EyeOutlined>
-        </template>
-        Schätzungen aufdecken
-      </a-button>
+  <header class="topbar">
+    <div class="tb-left">
+      <div class="session-block">
+        <span class="label-xs">Session</span>
+        <h2 v-if="sessionRef" class="session-title">{{ sessionRef.name }}</h2>
+      </div>
     </div>
-    <div>
-      <a-button @click="handleCopy">
-        <template #icon>
-          <CopyOutlined />
-        </template>
-      </a-button>
-      Token: {{gameToken}}
+
+    <div class="tb-right">
+      <button
+        v-if="userRef"
+        class="who who-btn"
+        @click="renameSelfOpen = true"
+        :title="'Click to change your name'"
+      >
+        <UserOutlined />
+        <span class="who-name">{{ userRef.name }}</span>
+        <EditOutlined class="who-edit" />
+        <span v-if="userRef.isOwner" class="owner-pill label-xs">host</span>
+      </button>
+      <div v-else class="who who-spectator">
+        <UserOutlined />
+        <span class="who-name">Spectator</span>
+      </div>
+      <button class="settings-btn" @click="settingsOpen = true" aria-label="Open settings">
+        <SettingOutlined />
+      </button>
     </div>
-    <div v-if="userRef" style="" class="top-bar_container top-bar_usercontainer">
-      <EstimationOptionsChooser v-if="userRef && userRef.isOwner"></EstimationOptionsChooser>
-      <ColorThemeChooser></ColorThemeChooser>
-      <UserOutlined style="margin: .7rem;"/>
-      <h1>{{userRef.name}}</h1>
-      <a-button v-if="userRef && !userRef.isOwner" @click="handleSpectateFromPlayer" style="margin-left: 1.5rem;" >
-        Zuschauer werden
-        <template #icon>
-          <UserSwitchOutlined />
-        </template>
-      </a-button>
-      <a-button type="default" style="margin-left: 1.5rem;" @click="handleLeave()">
-        Verlassen
-        <template #icon><LogoutOutlined /></template>
-      </a-button>
-    </div>
-    <div v-if="!userRef"  class="top-bar_container top-bar_usercontainer">
-      <ColorThemeChooser></ColorThemeChooser>
-      <UserOutlined style="margin: .7rem;"/>
-      <h1>Zuschauer</h1>
-      <a-button @click="handleJoinGame" style="margin-left: 1.5rem;">
-        Spiel beitreten
-        <template #icon>
-          <UserSwitchOutlined />
-        </template>
-      </a-button>
-      <a-button type="default" style="margin-left: 1.5rem;" @click="handleLeaveSpectatorMode()">
-        <template #icon><LogoutOutlined /></template>
-      </a-button>
-    </div>
-  </div>
+  </header>
+
+  <SettingsDrawer :open="settingsOpen" @close="settingsOpen = false" />
+  <RenameSelfDialog :open="renameSelfOpen" @close="renameSelfOpen = false" />
 </template>
 
 <style scoped>
-
-h1 {
-  margin: 0;
-  font-size: 1.3em;
-}
-.top-bar_usercontainer {
+.topbar {
   display: flex;
   align-items: center;
-  justify-content: end;
-  gap: .5rem
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  background: linear-gradient(180deg, var(--panel) 0%, var(--ink) 100%);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  min-height: 64px;
 }
 
-.top-bar {
-  flex-wrap: wrap;
-  width: 100%;
-  margin: 0 auto;
-  background-image: linear-gradient(to right, rgba(var(--lingrad-a), 0.7), rgba(var(--lingrad-b), 0.7));
-  color: white;
+.tb-left { display: flex; align-items: center; gap: 1rem; min-width: 0; flex: 1; }
+.session-block { display: flex; flex-direction: column; min-width: 0; }
+.session-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 16rem;
+}
+
+.tb-right { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+
+.who {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  background: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--cream);
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+.who-btn {
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.who-btn:hover {
+  border-color: var(--lime);
+  color: var(--lime);
+  transform: translateY(-1px);
+}
+.who-edit {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  margin-left: -0.15rem;
+}
+.who-btn:hover .who-edit { opacity: 1; }
+.who-spectator { color: var(--muted); }
+.who-name { letter-spacing: -0.01em; max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.owner-pill {
+  background: var(--lime);
+  color: var(--ink);
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.08em;
+  font-size: 0.6rem;
+}
+
+.settings-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: var(--ink-soft);
+  border: 1px solid var(--line);
+  color: var(--cream-dim);
+  cursor: pointer;
+  font-size: 1.1rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1.3rem;
-  text-shadow: 1px 1px 5px black;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.top-bar_container {
-  display: flex;
-  flex-wrap: wrap;
-  width: 35rem;
+.settings-btn:hover {
+  color: var(--lime);
+  border-color: var(--lime);
+  transform: rotate(60deg);
 }
 
-@media(max-width: 1295px) {
-  .top-bar_usercontainer {
-    justify-content: start;
-    margin-top: .4rem;
-  }
+@media (max-width: 480px) {
+  .topbar { padding: 0.75rem 0.85rem; }
+  .session-title { max-width: 7rem; font-size: 1rem; }
+  .who-name { max-width: 4.5rem; font-size: 0.82rem; }
+  .settings-btn { width: 36px; height: 36px; font-size: 1rem; }
 }
 </style>

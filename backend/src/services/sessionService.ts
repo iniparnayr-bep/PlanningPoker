@@ -25,12 +25,15 @@ export const getSessionInfo = (sessionToken: string) => {
             open: session.open,
             estimationOptions: session.estimationOptions,
             estimationValues: session.estimationValues,
+            color: session.color,
+            emojisEnabled: session.emojisEnabled,
             players: session.players.map((player) => {
                 return {
                     name: player.name,
                     id: player.id,
                     estimate: open ? player.estimate : (player.estimate === null ? null : -1),
                     isOwner: player.isOwner,
+                    avatar: player.avatar,
                 };
             })
         } as ExportEstimateSession;
@@ -47,6 +50,7 @@ export const mapPersonalPlayerExport = (player: Player) => {
         estimate: player.estimate,
         token: player.token,
         isOwner: player.isOwner,
+        avatar: player.avatar,
     };
 }
 
@@ -99,7 +103,7 @@ const handAdminOver = (session: Session, player: Player) => {
         if (newOwner) {
             newOwner.isOwner = true;
             io.to(socketPlayers[newOwner.token]).emit('updateUserinfo');
-            sendMessageStrFromServer(session.token, newOwner.name + ' ist jetzt der Sitzungsleiter.');
+            sendMessageStrFromServer(session.token, newOwner.name + ' is now the session leader.');
             log('handAdminOver: ' + newOwner.name + ' is now the session owner');
         }
     }
@@ -119,7 +123,7 @@ export const playerLeave = (sessionToken: string, playerToken: string) => {
     if (session) {
         session.players = session.players.filter((player) => player.token !== playerToken);
         io.to(sessionToken).emit('playerLeft', getSessionInfo(sessionToken));
-        sendMessageStrFromServer(sessionToken, player?.name + ' hat die Sitzung verlassen.');
+        sendMessageStrFromServer(sessionToken, player?.name + ' left the session.');
         if (session.players.length === 0) {
             activateSessionDeletion(session);
         }
@@ -140,7 +144,7 @@ export const playerKick = (sessionToken: string, playerToken: string) => {
         session.players = session.players.filter((player) => player.token !== playerToken);
         io.to(sessionToken).emit('playerKicked', getSessionInfo(sessionToken));
         io.to(socketPlayers[playerToken]).emit('kicked');
-        sendMessageStrFromServer(sessionToken, player?.name + ' wurde von ' + session.players.find((player) => player.isOwner)?.name + ' zum Zuschauer gemacht.');
+        sendMessageStrFromServer(sessionToken, player?.name + ' was moved to spectator by ' + session.players.find((player) => player.isOwner)?.name + '.');
     } else {
         throw new Error('Session not found');
     }

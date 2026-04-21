@@ -19,7 +19,7 @@ export async function postMessage(message: string, type: 'std' | 'ai') {
     message = commandTransformations(message)
 
     const messageObj: Message = {
-        name: userRef?.value?.name ?? 'Zuschauer',
+        name: userRef?.value?.name ?? 'Spectator',
         message: message,
         timestamp: Date.now(),
         type: type

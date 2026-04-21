@@ -15,11 +15,11 @@ import {Lit} from "litlyx-js";
 function socketSessionUpdateListeners() {
     socket!.on('playerJoined', (session: ExportEstimateSession) => {
         sessionRef.value = session;
-        message.info('Ein Spieler ist der Sitzung beigetreten.');
+        message.info('A player joined the session.');
     });
     socket!.on('playerLeft', (session: ExportEstimateSession) => {
         sessionRef.value = session;
-        message.info('Ein Spieler hat die Sitzung verlassen.');
+        message.info('A player left the session.');
     });
     socket!.on('estimationOptionsChanged', (session: ExportEstimateSession) => {
         sessionRef.value = session;
@@ -33,9 +33,12 @@ function socketSessionUpdateListeners() {
     socket!.on('sessionOpened', (session: ExportEstimateSession) => {
         sessionRef.value = session;
     });
+    socket!.on('sessionSettings', (session: ExportEstimateSession) => {
+        sessionRef.value = session;
+    });
     socket!.on('playerKicked', (session: ExportEstimateSession) => {
         sessionRef.value = session;
-        message.info('Ein Spieler wurde aus der Sitzung entfernt.');
+        message.info('A player was removed from the session.');
     });
     socket!.on('newHistogram', (histogram: EstimationHistogram) => {
         histogramRef.value = histogram;
@@ -72,7 +75,7 @@ function socketSessionListenersForPlayers() {
         }, 1000);
     });
     socket!.on('kickWarning', () => {
-        message.warning('Du wirst in 5 Minuten aus der Sitzung geworfen, wenn du nicht aktiv bleibst');
+        message.warning('You will be removed from the session in 5 minutes if you remain inactive.');
     });
 }
 
@@ -108,7 +111,7 @@ export async function joinGame(sessionToken: string, playerName: string): Promis
         name: playerName,
     })
     if (res.status === 404) {
-        message.error('Beitreten fehlgeschlagen, überprüfe den Token.');
+        message.error('Failed to join — check the session token.');
     }
     socketConnect();
     // @ts-ignore

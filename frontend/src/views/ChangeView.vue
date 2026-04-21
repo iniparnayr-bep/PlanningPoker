@@ -1,6 +1,6 @@
 <template>
   <div class="card-container">
-    <a-card class="card" title="Hier kannst du eine Änderung vorschlagen" hoverable>
+    <a-card class="card" title="Suggest a Change" hoverable>
       <user-request-form request-type="changerequest"></user-request-form>
     </a-card>
   </div>

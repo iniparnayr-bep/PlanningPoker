@@ -1,6 +1,6 @@
 <template>
   <div class="card-container">
-    <a-card class="card" title="Hier kannst du einen gefundenen Fehler angeben" hoverable>
+    <a-card class="card" title="Report a Bug" hoverable>
       <user-request-form request-type="bugreport"></user-request-form>
     </a-card>
   </div>

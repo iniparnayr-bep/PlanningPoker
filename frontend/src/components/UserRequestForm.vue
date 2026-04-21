@@ -47,7 +47,7 @@ import { message } from 'ant-design-vue';
 import env from "@/environments/environments";
 import environment from "@/environments/environments";
 
-// Props definieren
+// Define props
 const props = defineProps({
   requestType: {
     type: String,
@@ -58,7 +58,7 @@ const props = defineProps({
   }
 });
 
-// Daten definieren
+// Define data
 const formData = ref({
   title: '',
   text: ''
@@ -66,7 +66,7 @@ const formData = ref({
 
 const loading = ref(false);
 
-// Methoden
+// Methods
 const handleSubmit = async () => {
   if (!formData.value.title || !formData.value.text) {
     message.error('Please fill in both the title and the text.');
@@ -80,15 +80,15 @@ const handleSubmit = async () => {
     const response = await axios.post(`${env.apiServiceRoute}/${props.requestType}`, formData.value);
 
     if (response.status === 200) {
-      message.success('Deine Anfrage wurde erfolgreich abgeschickt.');
+      message.success('Your request was submitted successfully.');
     } else {
-      message.error('Ein Fehler ist aufgetreten.');
+      message.error('An error occurred.');
     }
   } catch (error: any) {
     if (error?.response?.status === 429)
-      message.warn('Zu viele Anfragen versuche es später nochmal.');
+      message.warn('Too many requests, please try again later.');
     else
-      message.error('Ein Fehler ist aufgetreten.');
+      message.error('An error occurred.');
   } finally {
     loading.value = false;
     formData.value = {

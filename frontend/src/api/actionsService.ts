@@ -111,3 +111,35 @@ export async function getActiveSessions() {
     const res = await axios.get(env.apiServiceRoute + '/currentActiveSessions');
     return res.data as ActiveSessions;
 }
+
+export async function setSessionColor(color: string) {
+    if (!userRef.value || !sessionRef.value) throw new Error('not initialized');
+    await axios.put(
+        env.apiServiceRoute + '/session/' + sessionRef.value.token + '/color',
+        { userToken: userRef.value.token, color },
+    );
+}
+
+export async function setSessionEmojisEnabled(enabled: boolean) {
+    if (!userRef.value || !sessionRef.value) throw new Error('not initialized');
+    await axios.put(
+        env.apiServiceRoute + '/session/' + sessionRef.value.token + '/emojis',
+        { userToken: userRef.value.token, enabled },
+    );
+}
+
+export async function renameSelf(opts: { name?: string; avatar?: string }) {
+    if (!userRef.value || !sessionRef.value) throw new Error('not initialized');
+    await axios.put(
+        env.apiServiceRoute + '/player/rename/' + sessionRef.value.token,
+        { userToken: userRef.value.token, ...opts },
+    );
+}
+
+export async function renameSession(name: string) {
+    if (!userRef.value || !sessionRef.value) throw new Error('not initialized');
+    await axios.put(
+        env.apiServiceRoute + '/session/' + sessionRef.value.token + '/rename',
+        { userToken: userRef.value.token, name },
+    );
+}

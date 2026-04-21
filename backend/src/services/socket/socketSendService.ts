@@ -23,9 +23,9 @@ export function sendAiCommandResponse(anyToken: string, message: string) {
     message = sanitize(message);
     const messageObj = {
         message: message,
-        name: 'Server',
+        name: 'AI',
         timestamp: new Date().getTime(),
-        type: 'ai'
+        type: 'std'
     }
     io.to(anyToken).emit('newMessage', messageObj);
 }
