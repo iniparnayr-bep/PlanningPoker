@@ -31,9 +31,10 @@ watch(
         v-if="userRef"
         class="who who-btn"
         @click="renameSelfOpen = true"
-        :title="'Click to change your name'"
+        :title="'Click to edit your profile'"
       >
-        <UserOutlined />
+        <span v-if="userRef.avatar" class="who-avatar">{{ userRef.avatar }}</span>
+        <UserOutlined v-else />
         <span class="who-name">{{ userRef.name }}</span>
         <EditOutlined class="who-edit" />
         <span v-if="userRef.isOwner" class="owner-pill label-xs">host</span>
@@ -102,6 +103,11 @@ watch(
   border-color: var(--lime);
   color: var(--lime);
   transform: translateY(-1px);
+}
+.who-avatar {
+  font-size: 1.15rem;
+  line-height: 1;
+  margin-right: -0.15rem;
 }
 .who-edit {
   font-size: 0.7rem;

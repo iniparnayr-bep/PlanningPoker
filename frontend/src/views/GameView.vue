@@ -18,7 +18,7 @@ import { rainEmoji } from "@/api/emojiRainService";
 import env from "@/environments/environments";
 import {
   EyeOutlined, EyeInvisibleOutlined, MessageOutlined, CloseOutlined,
-  SmileOutlined, CopyOutlined
+  SmileOutlined, LinkOutlined
 } from "@ant-design/icons-vue";
 
 const router = useRouter();
@@ -101,27 +101,26 @@ function fireRain(emoji: string) {
 <template>
   <TopBar />
 
-  <!-- Reveal/New-round bar: centered, directly below the header -->
-  <div class="reveal-bar" v-if="isOwner">
-    <button
-      class="reveal-btn"
-      :class="{ 'reveal-pending': !isRevealed, 'reveal-active': isRevealed }"
-      :disabled="toggling"
-      @click="toggleReveal"
-    >
-      <EyeOutlined v-if="!isRevealed" />
-      <EyeInvisibleOutlined v-else />
-      <span>{{ isRevealed ? 'New round' : 'Reveal estimates' }}</span>
-    </button>
-  </div>
-
   <main class="game">
     <section class="board">
       <div class="board-head">
-        <span class="label-xs">Table</span>
-        <span class="board-count mono">
-          <span class="ready">{{ readyCount }}</span> / {{ playerCount }}
-        </span>
+        <div class="board-head-left">
+          <span class="label-xs">Table</span>
+          <span class="board-count mono">
+            <span class="ready">{{ readyCount }}</span> / {{ playerCount }}
+          </span>
+        </div>
+        <button
+          v-if="isOwner"
+          class="reveal-btn"
+          :class="{ 'reveal-pending': !isRevealed, 'reveal-active': isRevealed }"
+          :disabled="toggling"
+          @click="toggleReveal"
+        >
+          <EyeOutlined v-if="!isRevealed" />
+          <EyeInvisibleOutlined v-else />
+          <span>{{ isRevealed ? 'New round' : 'Reveal estimates' }}</span>
+        </button>
       </div>
 
       <div class="players" v-if="sessionRef">
@@ -148,7 +147,7 @@ function fireRain(emoji: string) {
   <!-- ── Action FAB stack (bottom right) ── -->
   <div class="fab-stack" :class="{ 'fab-stack-lifted': !isRevealed && userRef }">
     <button class="fab" @click="copyInvite" aria-label="Copy invite link" title="Copy invite">
-      <CopyOutlined />
+      <LinkOutlined />
     </button>
 
     <button v-if="emojisEnabled" class="fab fab-emoji" :class="{ active: emojiOpen }" @click="emojiOpen = !emojiOpen" aria-label="Rain emoji">
@@ -208,9 +207,15 @@ function fireRain(emoji: string) {
 }
 .board-head {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.board-head-left {
+  display: flex;
   align-items: baseline;
   gap: 0.75rem;
-  margin-bottom: 1.25rem;
 }
 .board-count {
   font-size: 1.1rem;
@@ -219,12 +224,6 @@ function fireRain(emoji: string) {
 }
 .board-count .ready { color: var(--lime); font-weight: 700; }
 
-/* Centered reveal bar directly below the topbar */
-.reveal-bar {
-  display: flex;
-  justify-content: center;
-  padding: 1rem 1.25rem 0;
-}
 .reveal-btn {
   display: inline-flex;
   align-items: center;

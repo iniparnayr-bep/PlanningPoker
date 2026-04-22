@@ -46,7 +46,7 @@ function getEstimationHistogram(session: Session) {
 }
 
 function handleNotComputable(token: string, session: Session) {
-    sendMessageStrFromServer(token, 'Durchschnitt nicht ermittelbar');
+    sendMessageStrFromServer(token, 'Average not available');
     logSesstionDetails(token, 'Average not computable');
     log('The estimations are: ' + session.players.map((player) => player.estimate ?? 'X').toString());
 }
@@ -82,5 +82,5 @@ function handleMessage(session: Session, token: string) {
         return;
     }
 
-    sendMessageStrFromServer(token, `Durchschnitt: ${roundedAvg}, Median: ${median}, Vorschlag (zweithöchstes): ${secondHighest}`);
+    sendMessageStrFromServer(token, `Average: ${roundedAvg} · Median: ${median} · Suggested (2nd highest): ${secondHighest}`);
 }
