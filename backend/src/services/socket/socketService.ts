@@ -8,6 +8,8 @@ import {
     socketPlayers,
     storePlayerToken,
 } from "./socketDataService.js";
+import {getPlayerByToken} from "../sessionService.js";
+import {registerSocketIp, unregisterSocket} from "../aiRateLimit.js";
 export const app = express();
 export const server = http.createServer(app);
 
@@ -19,11 +21,23 @@ export const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
+    // Store IP at connection time for rate limiting
+    const ip = (socket.handshake.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
+        ?? socket.handshake.address
+        ?? 'unknown';
+    registerSocketIp(socket.id, ip);
     socket.on('joinSession', (sessionToken, playertoken) => {
-        if (playertoken && sessionToken) {
+        if (!playertoken || !sessionToken) return;
+        // Security: verify this player token actually belongs to this session
+        // Spectators (no playertoken in URL) pass undefined playertoken — allow them to join the room channel
+        const player = getPlayerByToken(playertoken, sessionToken);
+        if (!player) {
+            // Could be spectator — allow joining the socket room for updates, but don't store a player token
             socket.join(sessionToken);
-            storePlayerToken(playertoken, socket.id)
+            return;
         }
+        socket.join(sessionToken);
+        storePlayerToken(playertoken, socket.id);
     });
     socket.on('chat', (message: Message) => {
         handleNewChatMessage(socket.id, message)
@@ -39,5 +53,6 @@ io.on('connection', (socket) => {
         if (playerToken) {
             delete socketPlayers[playerToken];
         }
+        unregisterSocket(socket.id);
     });
 });
