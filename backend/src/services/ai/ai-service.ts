@@ -64,7 +64,7 @@ Answer questions concisely and helpfully. Keep responses short — this is a cha
 
     try {
         const response = await anthropic.messages.create({
-            model: 'claude-haiku-4-6',
+            model: 'claude-haiku-4-5',
             max_tokens: 256,
             system: systemPrompt,
             messages: [{ role: 'user', content: userMessage }],
