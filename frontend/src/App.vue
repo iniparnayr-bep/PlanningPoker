@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
 import EmojiRain from '@/components/EmojiRain.vue';
+import ProNagModal from '@/components/ProNagModal.vue';
+import { showProNag } from '@/api/proService';
 import { Lit } from "litlyx-js";
 import environment from "@/environments/environments";
 
@@ -25,5 +27,6 @@ const antTheme = {
   <a-config-provider :theme="antTheme">
     <RouterView />
     <EmojiRain />
+    <ProNagModal v-if="showProNag" />
   </a-config-provider>
 </template>

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import ProView from '../views/ProView.vue'
 import GameView from "@/views/GameView.vue";
 import JoinView from "@/views/JoinView.vue";
 import BugView from "@/views/BugView.vue";
@@ -13,6 +14,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView
+    },
+    {
+      path: '/pro',
+      name: 'pro',
+      component: ProView
     },
     {
       path: '/game/:token',

@@ -3,6 +3,7 @@ import { SendOutlined, PictureOutlined, RobotOutlined, CalculatorOutlined } from
 import { messagesRef, postMessage } from "@/api/chatService";
 import { ref, nextTick, computed, watch, useTemplateRef } from 'vue';
 import sessionRef from '@/reactive/useSession';
+import { canUseAi, recordAiUse, aiUsesLeft } from '@/api/proService';
 
 const messageInput = ref('');
 const messagesContainer = useTemplateRef<HTMLElement>('messagesContainer');
@@ -26,6 +27,9 @@ const avatarFor = (name: string): string => {
   return p?.avatar || '👤';
 };
 
+const isAiCommand = (msg: string) =>
+  msg.startsWith('/ask') || msg.startsWith('/estimate') || msg.startsWith('/estimation');
+
 function send() {
   if (!messageInput.value.trim()) return;
   let msg = messageInput.value.trim();
@@ -33,9 +37,13 @@ function send() {
   // Map /image → existing /img command (backend already understands /img)
   if (msg.startsWith('/image ')) msg = '/img ' + msg.slice(7);
 
-  // Combined stream: AI commands and standard both post as 'std' — backend routes the AI ones
-  const type: 'std' | 'ai' = (msg.startsWith('/ask') || msg.startsWith('/estimate') || msg.startsWith('/estimation')) ? 'ai' : 'std';
+  // Gate AI commands behind the pro limit check
+  if (isAiCommand(msg)) {
+    if (!canUseAi()) return; // nag modal will show
+    recordAiUse();
+  }
 
+  const type: 'std' | 'ai' = isAiCommand(msg) ? 'ai' : 'std';
   postMessage(msg, type);
   messageInput.value = '';
   scrollDown();
@@ -107,6 +115,9 @@ const activeCommand = computed(() => {
         <component :is="cmd.icon" class="cmd-chip-icon" />
         <span class="cmd-chip-label mono">{{ cmd.command }}</span>
       </button>
+      <span class="ai-uses-left mono" :class="{ 'uses-low': aiUsesLeft <= 1, 'uses-none': aiUsesLeft === 0 }">
+        {{ aiUsesLeft > 0 ? `${aiUsesLeft} AI left` : 'AI limit reached' }}
+      </span>
     </div>
 
     <div class="chat-input-row">
@@ -241,6 +252,17 @@ const activeCommand = computed(() => {
 .cmd-chip-icon { font-size: 0.85rem; }
 .cmd-chip:hover { border-color: var(--lime); color: var(--lime); }
 .cmd-chip.active { background: var(--lime-dim); border-color: var(--lime); color: var(--lime); }
+
+.ai-uses-left {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--muted);
+  white-space: nowrap;
+  padding: 0.3rem 0;
+  flex-shrink: 0;
+}
+.uses-low { color: var(--marigold); }
+.uses-none { color: var(--coral); }
 
 .chat-input-row {
   display: flex;
